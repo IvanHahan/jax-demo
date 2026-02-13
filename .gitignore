@@ -1,1 +1,49 @@
-/.pytest_cache
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Type checking
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# Node / Extension
+node_modules/
+out/
+*.tsbuildinfo
+*.vsix
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Provenance data (local storage)
+.ai-provenance/
