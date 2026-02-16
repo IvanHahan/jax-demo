@@ -51,6 +51,7 @@ def plot_grid(
         is_gen = grid.node_is_generator[i]
         demand = grid.node_demand[i]
         gen = generation[i]
+        phase_deg = float(theta[i]) * 180.0 / jnp.pi  # Convert radians to degrees
 
         if is_gen:
             node_colors.append("lightgreen")
@@ -62,7 +63,11 @@ def plot_grid(
             node_colors.append("lightgray")
             label = ""
 
-        node_labels[i] = f"{i}\n{label}"
+        # Add phase angle to all nodes
+        if label:
+            node_labels[i] = f"{i}\n{label}\nθ:{phase_deg:.1f}°"
+        else:
+            node_labels[i] = f"{i}\nθ:{phase_deg:.1f}°"
         node_sizes.append(1000)
 
     # Edge Colors/Widths based on flow

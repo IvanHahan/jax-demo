@@ -70,6 +70,9 @@ def update_step(
     # 3. Post-process / Projection (Physical Constraints)
     new_theta, new_gen = new_params
 
+    # Normalize phase angles to [-π, π] range for physical realism
+    new_theta = jnp.arctan2(jnp.sin(new_theta), jnp.cos(new_theta))
+
     # Ensure theta[0] remains exactly 0 (redundant but safe)
     new_theta = new_theta.at[0].set(0.0)
 
