@@ -38,6 +38,7 @@ def update_step(
     optimizer: optax.GradientTransformation,
     lambda_bal: float = 1000.0,
     lambda_cap: float = 1000.0,
+    lambda_angle: float = 10.0,
 ) -> Tuple[OptimizationState, float]:
     """
     Performs one step of optimization using the provided optax optimizer.
@@ -48,7 +49,7 @@ def update_step(
     # Define a helper to compute loss from params
     def loss_fn(p):
         t, g = p
-        return compute_loss(t, g, grid, lambda_bal, lambda_cap)
+        return compute_loss(t, g, grid, lambda_bal, lambda_cap, lambda_angle)
 
     # Value and Gradient
     loss_val, grads = jax.value_and_grad(loss_fn)(params)
@@ -70,9 +71,6 @@ def update_step(
     # 3. Post-process / Projection (Physical Constraints)
     new_theta, new_gen = new_params
 
-    # Normalize phase angles to [-π, π] range for physical realism
-    new_theta = jnp.arctan2(jnp.sin(new_theta), jnp.cos(new_theta))
-
     # Ensure theta[0] remains exactly 0 (redundant but safe)
     new_theta = new_theta.at[0].set(0.0)
 
@@ -90,6 +88,7 @@ def run_optimization(
     learning_rate: float = 0.05,  # Adaptive learning rate for Adam
     lambda_bal: float = 1000.0,
     lambda_cap: float = 1000.0,
+    lambda_angle: float = 10.0,
     print_every: int = 100,
 ) -> Tuple[OptimizationState, jnp.ndarray]:
     """
@@ -106,7 +105,7 @@ def run_optimization(
     # Since we call it in a loop, let's make a partially applied JIT function.
     @jax.jit
     def step(s):
-        return update_step(grid, s, optimizer, lambda_bal, lambda_cap)
+        return update_step(grid, s, optimizer, lambda_bal, lambda_cap, lambda_angle)
 
     # Main Loop
     for i in range(num_steps):

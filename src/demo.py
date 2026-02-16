@@ -27,7 +27,7 @@ def create_5_node_grid() -> Grid:
     gen_cost_b = jnp.array([10.0, 0.0, 30.0, 0.0, 0.0])
     line_from = jnp.array([0, 1, 0, 1, 3])
     line_to = jnp.array([1, 2, 3, 4, 4])
-    line_susceptance = jnp.array([10.0, 10.0, 10.0, 10.0, 10.0])
+    line_susceptance = jnp.array([100.0, 100.0, 100.0, 100.0, 100.0])
     line_capacity = jnp.array([100.0, 50.0, 100.0, 50.0, 50.0])
 
     return Grid(

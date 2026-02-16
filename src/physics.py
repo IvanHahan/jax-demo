@@ -87,11 +87,12 @@ def compute_loss(
     grid: Grid,
     lambda_bal: float = 1000.0,
     lambda_cap: float = 1000.0,
+    lambda_angle: float = 10.0,
 ) -> jnp.ndarray:
     """
     Computes the total penalized loss.
 
-    L = Cost(g) + lambda_bal * ||Balance||^2 + lambda_cap * ||CapWait||^2
+    L = Cost(g) + lambda_bal * ||Balance||^2 + lambda_cap * ||CapWait||^2 + lambda_angle * ||theta||^2
     """
     # 1. Generation Cost
     cost = compute_total_cost(grid, generation)
@@ -109,5 +110,14 @@ def compute_loss(
     flow_violation = jnp.maximum(0.0, jnp.abs(flows) - grid.line_capacity)
     capacity_penalty = jnp.sum(jnp.square(flow_violation))
 
-    total_loss = cost + lambda_bal * balance_penalty + lambda_cap * capacity_penalty
+    # 4. Angle Regularization (keep per-line angle differences small for stability)
+    delta_theta_lines = theta[grid.line_from] - theta[grid.line_to]
+    angle_penalty = jnp.sum(jnp.square(delta_theta_lines))
+
+    total_loss = (
+        cost
+        + lambda_bal * balance_penalty
+        + lambda_cap * capacity_penalty
+        + lambda_angle * angle_penalty
+    )
     return total_loss

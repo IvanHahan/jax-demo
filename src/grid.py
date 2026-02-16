@@ -50,7 +50,7 @@ def create_simple_grid() -> Grid:
     # 0-1, 1-2, 2-0
     line_from = jnp.array([0, 1, 2])
     line_to = jnp.array([1, 2, 0])
-    line_susceptance = jnp.array([10.0, 10.0, 10.0])
+    line_susceptance = jnp.array([100.0, 100.0, 100.0])
     line_capacity = jnp.array([50.0, 50.0, 50.0])
 
     return Grid(
@@ -97,7 +97,7 @@ def create_8_node_complex_grid() -> Grid:
     line_from = jnp.array([e[0] for e in edges])
     line_to = jnp.array([e[1] for e in edges])
 
-    line_susceptance = jnp.full(len(edges), 10.0)
+    line_susceptance = jnp.full(len(edges), 100.0)
     # Varied capacities to create interesting congestion
     line_capacity = jnp.array(
         [
@@ -172,7 +172,7 @@ def create_20_node_large_grid(seed: int = 42) -> Grid:
     line_to = jnp.array([v for u, v in G.edges()])
 
     num_edges = len(G.edges())
-    line_susceptance = jnp.full(num_edges, 10.0)
+    line_susceptance = jnp.full(num_edges, 100.0)
     line_capacity = jnp.full(num_edges, 60.0)  # Tighten capacity to force optimization
 
     return Grid(
