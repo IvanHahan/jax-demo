@@ -1,12 +1,8 @@
+import argparse
+
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-
-# Configure JAX to use CPU (usually sufficient for this size)
-jax.config.update("jax_platform_name", "cpu")
-
-import argparse
-
 import optax
 
 from src.grid import (
@@ -18,6 +14,9 @@ from src.grid import (
 from src.optimization import initialize_optimization, run_optimization
 from src.physics import compute_power_balance_violations
 from src.visualization import plot_grid
+
+jax.config.update("jax_platform_name", "cpu")
+# Configure JAX to use CPU (usually sufficient for this size)
 
 
 def create_5_node_grid() -> Grid:
