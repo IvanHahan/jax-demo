@@ -12,7 +12,7 @@ from src.grid import (
     create_simple_grid,
 )
 from src.optimization import initialize_optimization, run_optimization
-from src.physics import compute_power_balance_violations
+from src.physics import compute_phase_angles, compute_power_balance_violations
 from src.visualization import plot_grid
 
 jax.config.update("jax_platform_name", "cpu")
@@ -23,8 +23,7 @@ def create_5_node_grid() -> Grid:
     # (Leaving original for compatibility or specific demo)
     node_demand = jnp.array([0.0, 50.0, 0.0, 30.0, 40.0])
     node_is_generator = jnp.array([True, False, True, False, False])
-    gen_cost_a = jnp.array([0.01, 0.0, 0.05, 0.0, 0.0])
-    gen_cost_b = jnp.array([10.0, 0.0, 30.0, 0.0, 0.0])
+    gen_cost = jnp.array([10.0, 0.0, 30.0, 0.0, 0.0])
     line_from = jnp.array([0, 1, 0, 1, 3])
     line_to = jnp.array([1, 2, 3, 4, 4])
     line_susceptance = jnp.array([100.0, 100.0, 100.0, 100.0, 100.0])
@@ -33,8 +32,7 @@ def create_5_node_grid() -> Grid:
     return Grid(
         node_demand=node_demand,
         node_is_generator=node_is_generator,
-        gen_cost_a=gen_cost_a,
-        gen_cost_b=gen_cost_b,
+        gen_cost=gen_cost,
         line_from=line_from,
         line_to=line_to,
         line_susceptance=line_susceptance,
@@ -81,7 +79,8 @@ def run_demo(grid_type: str = "medium"):
     print(f"Final Loss: {loss_history[-1]:.4f}")
 
     # Extract final parameters
-    final_theta, final_gen = final_state.params
+    final_gen = final_state.generation
+    final_theta = compute_phase_angles(grid, final_gen)
 
     from src.physics import compute_power_flows
 

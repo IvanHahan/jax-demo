@@ -1,8 +1,13 @@
 import jax.numpy as jnp
+import optax
 
 from src.grid import create_simple_grid
 from src.optimization import initialize_optimization, run_optimization, update_step
-from src.physics import compute_power_balance_violations, compute_power_flows
+from src.physics import (
+    compute_phase_angles,
+    compute_power_balance_violations,
+    compute_power_flows,
+)
 
 
 def run_tests():
@@ -11,11 +16,12 @@ def run_tests():
     # Test 1: Loss Reduction
     print("Test 1: Check loss reduction single step...")
     grid = create_simple_grid()
-    state = initialize_optimization(grid)
+    optimizer = optax.adam(1e-3)
+    state = initialize_optimization(grid, optimizer)
 
     # initial step
-    state_1, loss_1 = update_step(grid, state)
-    state_2, loss_2 = update_step(grid, state_1)
+    state_1, loss_1 = update_step(grid, state, optimizer)
+    state_2, loss_2 = update_step(grid, state_1, optimizer)
 
     if loss_2 < loss_1:
         print(f"PASS: Loss reduced from {loss_1:.4f} to {loss_2:.4f}")
@@ -30,7 +36,8 @@ def run_tests():
     )
 
     # Check that power balance is satisfied
-    flows = compute_power_flows(grid, final_state.theta)
+    theta = compute_phase_angles(grid, final_state.generation)
+    flows = compute_power_flows(grid, theta)
     mismatch = compute_power_balance_violations(grid, final_state.generation, flows)
 
     total_mismatch = jnp.sum(jnp.abs(mismatch))

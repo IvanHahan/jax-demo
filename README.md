@@ -15,16 +15,15 @@ In this context, a **Power Grid** is modeled as a network (graph) of:
 
 ## Generation Cost Model
 
-In power systems, the cost of producing electricity is not linear. Most power plants become less efficient as they reach their maximum capacity. We model this using a **Quadratic Cost Function** for each generator $i$:
+For simplicity, we model generation cost as a **linear function** for each generator $i$:
 
-$$Cost_i(g_i) = a_i \cdot g_i^2 + b_i \cdot g_i$$
+$$Cost_i(g_i) = c_i \cdot g_i$$
 
-### What do the parameters mean? (Units in $)
-- **$b \cdot g$ (Linear Term)**: Represents the **Variable Cost** (fuel, labor). The coefficient $b$ is in **$/MWh**.
-- **$a \cdot g^2$ (Quadratic Term)**: Represents **Efficiency Losses**. The coefficient $a$ is in **$/(MW^2h)**.
+### What does the parameter mean? (Units in $)
+- **$c \cdot g$ (Linear Term)**: Represents the **Variable Cost** (fuel, labor). The coefficient $c$ is in **$/MWh**.
 - **Total System Cost**: The sum of costs across all generators, represented in **$/h (Dollars per hour)**.
 
-By minimizing this function, the system naturally prefers "cheaper" generators (small $b$) but will switch to more expensive ones if the cheap ones become inefficient at high output or if transmission lines are congested.
+By minimizing this function, the system naturally prefers cheaper generators (small $c$), but must still respect transmission constraints.
 
 ## Power Pooling: Who powers whom?
 
@@ -61,7 +60,7 @@ In the visualization, lines that are nearing their capacity are colored **Orange
 To simulate the grid, we define:
 1. **Topology**: Which nodes are connected to each other (the graph structure).
 2. **Nodal Demands**: How much power each "Load" node needs (e.g., a city or factory).
-- **Generator Costs**: For each generator, we define a quadratic cost function ( $Cost = a \cdot g^2 + b \cdot g$ ), where $a$ and $b$ are coefficients representing fuel Efficiency and operational costs.
+- **Generator Costs**: For each generator, we define a linear cost function ( $Cost = c \cdot g$ ).
 4. **Line Limits**:
    - **Susceptance ($B$)**: Physics parameter for flow calculation.
    - **Thermal Capacity ($C$)**: The maximum safe power flow a line can handle before overheating.
@@ -87,7 +86,7 @@ The `total_loss` optimized by JAX is the sum of three distinct components. It ba
 
 ### 1. Generation Cost
 - **Purpose**: Minimize the total money spent on producing electricity.
-- **Logic**: Uses the quadratic cost model $\sum (a_i g_i^2 + b_i g_i)$. The optimizer naturally tries to drive this to zero, which is countered by the penalties below.
+- **Logic**: Uses the linear cost model $\sum (c_i g_i)$. The optimizer naturally tries to drive this to zero, which is countered by the penalties below.
 
 ### 2. Power Balance Penalty
 - **Purpose**: Ensure the grid is stable and every consumer's demand is met.

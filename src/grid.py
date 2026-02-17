@@ -11,8 +11,7 @@ class Grid(NamedTuple):
     Attributes:
         node_demand: [N] Active power demand at each node (positive = load).
         node_is_generator: [N] Boolean mask, true if node has a generator.
-        gen_cost_a: [N] Quadratic cost coefficient (0 for non-generators).
-        gen_cost_b: [N] Linear cost coefficient (0 for non-generators).
+        gen_cost: [N] Linear cost coefficient (0 for non-generators).
         line_from: [E] Index of source node for each line.
         line_to: [E] Index of target node for each line.
         line_susceptance: [E] Susceptance (B) of each line (usually 1/reactance).
@@ -21,8 +20,7 @@ class Grid(NamedTuple):
 
     node_demand: jnp.ndarray
     node_is_generator: jnp.ndarray
-    gen_cost_a: jnp.ndarray
-    gen_cost_b: jnp.ndarray
+    gen_cost: jnp.ndarray
     line_from: jnp.ndarray
     line_to: jnp.ndarray
     line_susceptance: jnp.ndarray
@@ -40,24 +38,22 @@ def create_simple_grid() -> Grid:
     node_demand = jnp.array([0.0, 0.0, 100.0])  # Node 2 needs 100 MW
     node_is_generator = jnp.array([True, True, False])
 
-    # Cost functions:
-    # Gen 0: 0.01*g^2 + 10*g
-    # Gen 1: 0.02*g^2 + 20*g
-    gen_cost_a = jnp.array([0.01, 0.02, 0.0])
-    gen_cost_b = jnp.array([10.0, 20.0, 0.0])
+    # Cost functions (linear):
+    # Gen 0: 10*g
+    # Gen 1: 20*g
+    gen_cost = jnp.array([10.0, 20.0, 0.0])
 
     # 3 Lines connecting all nodes (triangle)
     # 0-1, 1-2, 2-0
     line_from = jnp.array([0, 1, 2])
     line_to = jnp.array([1, 2, 0])
-    line_susceptance = jnp.array([100.0, 100.0, 100.0])
+    line_susceptance = jnp.array([10.0, 10.0, 10.0])
     line_capacity = jnp.array([50.0, 50.0, 50.0])
 
     return Grid(
         node_demand=node_demand,
         node_is_generator=node_is_generator,
-        gen_cost_a=gen_cost_a,
-        gen_cost_b=gen_cost_b,
+        gen_cost=gen_cost,
         line_from=line_from,
         line_to=line_to,
         line_susceptance=line_susceptance,
@@ -76,9 +72,8 @@ def create_8_node_complex_grid() -> Grid:
     node_demand = jnp.array([0.0, 0.0, 0.0, 40.0, 50.0, 30.0, 60.0, 20.0])
     node_is_generator = jnp.array([True, True, True, False, False, False, False, False])
 
-    # Costs
-    gen_cost_a = jnp.array([0.005, 0.01, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0])
-    gen_cost_b = jnp.array([5.0, 15.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    # Costs (linear)
+    gen_cost = jnp.array([5.0, 15.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
     # Edges (Mesh topology)
     edges = [
@@ -97,7 +92,7 @@ def create_8_node_complex_grid() -> Grid:
     line_from = jnp.array([e[0] for e in edges])
     line_to = jnp.array([e[1] for e in edges])
 
-    line_susceptance = jnp.full(len(edges), 100.0)
+    line_susceptance = jnp.full(len(edges), 10.0)
     # Varied capacities to create interesting congestion
     line_capacity = jnp.array(
         [
@@ -118,8 +113,7 @@ def create_8_node_complex_grid() -> Grid:
     return Grid(
         node_demand=node_demand,
         node_is_generator=node_is_generator,
-        gen_cost_a=gen_cost_a,
-        gen_cost_b=gen_cost_b,
+        gen_cost=gen_cost,
         line_from=line_from,
         line_to=line_to,
         line_susceptance=line_susceptance,
@@ -144,17 +138,12 @@ def create_20_node_large_grid(seed: int = 42) -> Grid:
         jnp.zeros(20, dtype=bool).at[jnp.array([0, 5, 10, 15])].set(True)
     )
 
-    # Costs
+    # Costs (linear)
     # Gen 0: Very cheap
     # Gen 5: Mid
     # Gen 10: Mid
     # Gen 15: Expensive
-    gen_cost_a = (
-        jnp.zeros(20)
-        .at[jnp.array([0, 5, 10, 15])]
-        .set(jnp.array([0.002, 0.01, 0.01, 0.04]))
-    )
-    gen_cost_b = (
+    gen_cost = (
         jnp.zeros(20)
         .at[jnp.array([0, 5, 10, 15])]
         .set(jnp.array([5.0, 15.0, 20.0, 50.0]))
@@ -172,14 +161,13 @@ def create_20_node_large_grid(seed: int = 42) -> Grid:
     line_to = jnp.array([v for u, v in G.edges()])
 
     num_edges = len(G.edges())
-    line_susceptance = jnp.full(num_edges, 100.0)
+    line_susceptance = jnp.full(num_edges, 10.0)
     line_capacity = jnp.full(num_edges, 60.0)  # Tighten capacity to force optimization
 
     return Grid(
         node_demand=node_demand,
         node_is_generator=node_is_generator,
-        gen_cost_a=gen_cost_a,
-        gen_cost_b=gen_cost_b,
+        gen_cost=gen_cost,
         line_from=line_from,
         line_to=line_to,
         line_susceptance=line_susceptance,

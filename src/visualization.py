@@ -4,7 +4,7 @@ import networkx as nx
 
 from src.grid import Grid
 from src.optimization import OptimizationState
-from src.physics import compute_power_flows
+from src.physics import compute_phase_angles, compute_power_flows, compute_total_cost
 
 
 def plot_grid(
@@ -18,7 +18,7 @@ def plot_grid(
 
     Args:
         grid: Grid PyTree
-        state: OptimizationState (contains generation and theta)
+        state: OptimizationState (contains generation)
         title: Plot title
         filename: If provided, saves the plot to this file.
     """
@@ -45,14 +45,14 @@ def plot_grid(
     node_sizes = []
     node_labels = {}
 
-    theta, generation = state.params
+    generation = state.generation
+    total_cost = float(compute_total_cost(grid, generation))
+    theta = compute_phase_angles(grid, generation)
 
     for i in range(num_nodes):
         is_gen = grid.node_is_generator[i]
         demand = grid.node_demand[i]
         gen = generation[i]
-        phase_deg = float(theta[i]) * 180.0 / jnp.pi  # Convert radians to degrees
-
         if is_gen:
             node_colors.append("lightgreen")
             label = f"G:{gen:.1f}"
@@ -63,11 +63,10 @@ def plot_grid(
             node_colors.append("lightgray")
             label = ""
 
-        # Add phase angle to all nodes
         if label:
-            node_labels[i] = f"{i}\n{label}\nθ:{phase_deg:.1f}°"
+            node_labels[i] = f"{i}\n{label}"
         else:
-            node_labels[i] = f"{i}\nθ:{phase_deg:.1f}°"
+            node_labels[i] = f"{i}"
         node_sizes.append(1000)
 
     # Edge Colors/Widths based on flow
@@ -166,7 +165,7 @@ def plot_grid(
     ]
     plt.legend(handles=legend_elements, loc="upper right", title="Legend")
 
-    plt.title(title)
+    plt.title(f"{title}\nCost: {total_cost:.2f}")
     plt.axis("off")
 
     if filename:

@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 
 from src.grid import Grid
-from src.physics import compute_loss
+from src.physics import compute_loss, compute_phase_angles
 
 
 def optimize_grid(
@@ -16,29 +16,26 @@ def optimize_grid(
     verbose: bool = True,
 ) -> Tuple[jnp.ndarray, jnp.ndarray, list]:
     """
-    Runs gradient descent optimization to find optimal theta and generation.
+    Runs gradient descent optimization to find optimal generation.
     """
     num_nodes = grid.node_demand.shape[0]
 
     # Initialize parameters
-    # Theta starts at 0
-    theta = jnp.zeros(num_nodes)
-    # Generation starts at demand (naive guess)
-    generation = jnp.copy(grid.node_demand)
+    total_demand = jnp.sum(grid.node_demand)
+    num_gens = jnp.sum(grid.node_is_generator)
+    per_gen = jnp.where(num_gens > 0, total_demand / num_gens, 0.0)
+    generation = jnp.where(grid.node_is_generator, per_gen, 0.0)
 
     # JIT-compile the gradient function
-    # We differentiate with respect to both theta and generation
-    loss_grad_fn = jax.value_and_grad(compute_loss, argnums=(0, 1))
+    # We differentiate with respect to generation only
+    loss_grad_fn = jax.value_and_grad(compute_loss)
 
     loss_history = []
 
     for i in range(num_steps):
-        loss_val, (grad_theta, grad_gen) = loss_grad_fn(
-            theta, generation, grid, lambda_bal, lambda_cap
-        )
+        loss_val, grad_gen = loss_grad_fn(generation, grid, lambda_bal, lambda_cap)
 
         # Update parameters
-        theta = theta - learning_rate * grad_theta
         generation = generation - learning_rate * grad_gen
 
         # Clip generation to be non-negative (simple constraint)
@@ -52,4 +49,5 @@ def optimize_grid(
         if verbose and i % (num_steps // 10) == 0:
             print(f"Step {i}: Loss = {loss_val:.2f}")
 
+    theta = compute_phase_angles(grid, generation)
     return theta, generation, loss_history

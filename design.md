@@ -11,8 +11,7 @@ The project uses JAX for differentiable programming. Data is structured using JA
 class Grid(NamedTuple):
     node_demand: jnp.ndarray      # [N] Active power demand
     node_is_generator: jnp.ndarray # [N] Boolean mask
-    gen_cost_a: jnp.ndarray       # [N] Quadratic cost (a*g^2)
-    gen_cost_b: jnp.ndarray       # [N] Linear cost (b*g)
+    gen_cost: jnp.ndarray         # [N] Linear cost (c*g)
     line_from: jnp.ndarray        # [E] Start node index
     line_to: jnp.ndarray          # [E] End node index
     line_susceptance: jnp.ndarray # [E] Line susceptance (B)

@@ -3,7 +3,7 @@ import optax
 
 from src.grid import create_simple_grid
 from src.optimization import initialize_optimization, run_optimization, update_step
-from src.physics import compute_power_balance_violations
+from src.physics import compute_phase_angles, compute_power_balance_violations
 
 
 def test_optimization_reduces_loss():
@@ -26,7 +26,8 @@ def test_simple_grid_convergence():
     # Check that power balance is satisfied
     from src.physics import compute_power_flows
 
-    theta, generation = final_state.params
+    generation = final_state.generation
+    theta = compute_phase_angles(grid, generation)
     flows = compute_power_flows(grid, theta)
     mismatch = compute_power_balance_violations(grid, generation, flows)
 

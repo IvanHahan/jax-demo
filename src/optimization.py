@@ -9,27 +9,27 @@ from src.physics import compute_loss
 
 
 class OptimizationState(NamedTuple):
-    params: Tuple[jnp.ndarray, jnp.ndarray]  # (theta, generation)
+    generation: jnp.ndarray
     opt_state: optax.OptState
 
 
 def initialize_optimization(
-    grid: Grid, optimizer: optax.GradientTransformation
+    grid: Grid, optimizer: optax.GradientTransformation = None
 ) -> OptimizationState:
     """
     Initializes the optimization variables and optimizer state.
     """
-    num_nodes = grid.node_demand.shape[0]
-    theta = jnp.zeros(num_nodes)
-    generation = jnp.copy(grid.node_demand)
+    if optimizer is None:
+        optimizer = optax.adam(1e-3)
 
-    # Ensure only generators have non-zero generation
-    generation = jnp.where(grid.node_is_generator, generation, 0.0)
+    total_demand = jnp.sum(grid.node_demand)
+    num_gens = jnp.sum(grid.node_is_generator)
+    per_gen = jnp.where(num_gens > 0, total_demand / num_gens, 0.0)
+    generation = jnp.where(grid.node_is_generator, per_gen, 0.0)
 
-    params = (theta, generation)
-    opt_state = optimizer.init(params)
+    opt_state = optimizer.init(generation)
 
-    return OptimizationState(params=params, opt_state=opt_state)
+    return OptimizationState(generation=generation, opt_state=opt_state)
 
 
 def update_step(
@@ -43,42 +43,26 @@ def update_step(
     """
     Performs one step of optimization using the provided optax optimizer.
     """
-    params = state.params
-    theta, generation = params
+    generation = state.generation
 
-    # Define a helper to compute loss from params
-    def loss_fn(p):
-        t, g = p
-        return compute_loss(t, g, grid, lambda_bal, lambda_cap, lambda_angle)
+    # Define a helper to compute loss from generation
+    def loss_fn(g):
+        return compute_loss(g, grid, lambda_bal, lambda_cap, lambda_angle)
 
     # Value and Gradient
-    loss_val, grads = jax.value_and_grad(loss_fn)(params)
-
-    # Grads for theta and generation
-    grads_theta, grads_gen = grads
-
-    # 1. Handle Reference Angle
-    # Fix the reference angle (theta[0] = 0) by zeroing its gradient
-    grads_theta = grads_theta.at[0].set(0.0)
-
-    # Update grads tuple
-    grads = (grads_theta, grads_gen)
+    loss_val, grads = jax.value_and_grad(loss_fn)(generation)
 
     # 2. Apply Optimizer Updates
-    updates, new_opt_state = optimizer.update(grads, state.opt_state, params)
-    new_params = optax.apply_updates(params, updates)
+    updates, new_opt_state = optimizer.update(grads, state.opt_state, generation)
+    new_gen = optax.apply_updates(generation, updates)
 
     # 3. Post-process / Projection (Physical Constraints)
-    new_theta, new_gen = new_params
-
-    # Ensure theta[0] remains exactly 0 (redundant but safe)
-    new_theta = new_theta.at[0].set(0.0)
 
     # Project generation to be non-negative and only at generator nodes
     new_gen = jnp.maximum(0.0, new_gen)
     new_gen = jnp.where(grid.node_is_generator, new_gen, 0.0)
 
-    new_state = OptimizationState(params=(new_theta, new_gen), opt_state=new_opt_state)
+    new_state = OptimizationState(generation=new_gen, opt_state=new_opt_state)
     return new_state, loss_val
 
 
