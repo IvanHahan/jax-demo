@@ -45,16 +45,13 @@ def run_demo(grid_type: str = "medium"):
 
     if grid_type == "simple":
         grid = create_simple_grid()
-        num_steps = 1000  # Adam converges much faster
     elif grid_type == "complex":
         grid = create_8_node_complex_grid()
-        num_steps = 2000
     elif grid_type == "large":
         grid = create_20_node_large_grid()
-        num_steps = 5000
     else:  # medium
         grid = create_5_node_grid()
-        num_steps = 1500
+    num_steps = 10000
 
     # Initial State
     # Use a dummy optimizer just to get the initial params structure

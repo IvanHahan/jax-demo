@@ -55,7 +55,8 @@ def plot_grid(
         gen = generation[i]
         if is_gen:
             node_colors.append("lightgreen")
-            label = f"G:{gen:.1f}"
+            price = float(grid.gen_cost[i])
+            label = f"G:{gen:.1f}\n${price:.0f}/MW"
         elif demand > 0:
             node_colors.append("salmon")
             label = f"D:{demand:.1f}"
@@ -63,10 +64,7 @@ def plot_grid(
             node_colors.append("lightgray")
             label = ""
 
-        if label:
-            node_labels[i] = f"{i}\n{label}"
-        else:
-            node_labels[i] = f"{i}"
+        node_labels[i] = label
         node_sizes.append(1000)
 
     # Edge Colors/Widths based on flow
