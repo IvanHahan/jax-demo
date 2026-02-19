@@ -79,7 +79,6 @@ def plot_grid(
         v_ref = int(grid.line_to[i])
         flow = flows[i]
         capacity = float(grid.line_capacity[i])
-        susceptance = float(grid.line_susceptance[i])
         util = float(jnp.abs(flow) / capacity)
 
         # Determine actual flow direction for arrow
@@ -98,9 +97,7 @@ def plot_grid(
 
         width = 2.0 + 3.0 * util
         G.add_edge(u, v, color=color, width=width)
-        edge_labels[(u, v)] = (
-            f"{float(jnp.abs(flow)):.1f}/{capacity:.0f}\nB:{susceptance:.1f}"
-        )
+        edge_labels[(u, v)] = f"{float(jnp.abs(flow)):.1f}/{capacity:.0f}"
 
     # 4. Draw
     plt.figure(figsize=(12, 9))
