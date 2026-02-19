@@ -163,14 +163,5 @@ def compute_loss(
     flow_violation = jnp.maximum(0.0, jnp.abs(flows) - grid.line_capacity)
     capacity_penalty = jnp.sum(jnp.square(flow_violation))
 
-    # 4. Angle Regularization (keep per-line angle differences small for stability)
-    delta_theta_lines = theta[grid.line_from] - theta[grid.line_to]
-    angle_penalty = jnp.sum(jnp.square(delta_theta_lines))
-
-    total_loss = (
-        cost
-        + lambda_bal * balance_penalty
-        + lambda_cap * capacity_penalty
-        + lambda_angle * angle_penalty
-    )
+    total_loss = cost + lambda_bal * balance_penalty + lambda_cap * capacity_penalty
     return total_loss
